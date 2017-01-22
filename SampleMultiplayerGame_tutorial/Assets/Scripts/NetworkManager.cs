@@ -180,15 +180,22 @@ public class NetworkManager : MonoBehaviour, INetEventListener
 
     void OnUserConnected(string[] values)
     {
-        Debug.Log("all user born on this client");
         //values:
         //0: id        //1: name        //2: x        //3: y        //4: z
+        Debug.Log("got user: " + values[1]);
 
-        GameObject otherPlater = GameObject.Instantiate(playerGameObj.gameObject, playerGameObj.position, Quaternion.identity) as GameObject;
-        Player otherPlayerCom = otherPlater.GetComponent<Player>();
-        otherPlayerCom.id = values[0];
-        otherPlayerCom.playerName = values[1];
-        otherPlater.transform.position = new Vector3(float.Parse(values[2]), float.Parse(values[3]), float.Parse(values[4]));
+        GameObject player = GameObject.Find(values[1]) as GameObject;
+        if (player == null)
+        {
+            GameObject otherPlater = GameObject.Instantiate(playerGameObj.gameObject, playerGameObj.position, Quaternion.identity) as GameObject;
+            Player otherPlayerCom = otherPlater.GetComponent<Player>();
+            otherPlayerCom.id = values[0];
+            otherPlayerCom.playerName = values[1];
+            otherPlater.transform.position = new Vector3(float.Parse(values[2]), float.Parse(values[3]), float.Parse(values[4]));
+        } else
+        {
+            Debug.Log("user already exists: " + values[1]);
+        }
     }
 
     void OnUserPlay(string[] values)
@@ -214,11 +221,18 @@ public class NetworkManager : MonoBehaviour, INetEventListener
     void OnUserMove(string[] values)
     {
         //values:
-        //0: name        //1: x        //2: y        //3: z
+        //0: id,    //1: name       //2: x        //3: y        //4: z
 
-        GameObject player = GameObject.Find(values[0]) as GameObject;
-        player.transform.position = new Vector3(float.Parse(values[1]), float.Parse(values[2]), float.Parse(values[3]));
+        GameObject player = GameObject.Find(values[1]) as GameObject;
 
+        if (player != null)
+        {
+            player.transform.position = new Vector3(float.Parse(values[2]), float.Parse(values[3]), float.Parse(values[4]));
+        } else
+        {
+            string message = values[0];
+            SendMessage(ToServerMessageType.GET_USER, message);
+        }
     }
 
     void OnUserDisconnected(string[] values)
@@ -257,6 +271,7 @@ public class NetworkManager : MonoBehaviour, INetEventListener
         USER_CONNECT = 0,
         PLAY = 1,
         MOVE = 2,
-        USER_DISCONNECT = 3
+        USER_DISCONNECT = 3,
+        GET_USER = 4
     }
 }
